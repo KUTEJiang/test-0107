@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>旅行搭子匹配平台</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="container">
+        <h1 class="logo">TravelBuddy</h1>
+        <nav class="nav">
+          <button id="tripsNavBtn" class="btn btn-outline">行程</button>
+          <button id="invitesNavBtn" class="btn btn-outline">邀约</button>
+          <button id="expensesNavBtn" class="btn btn-outline">费用</button>
+          <button id="profileNavBtn" class="btn btn-outline" style="display: none;">我的档案</button>
+          <button id="loginBtn" class="btn btn-outline">登录</button>
+          <button id="registerBtn" class="btn btn-primary">注册</button>
+          <button id="logoutBtn" class="btn btn-outline" style="display: none;">退出</button>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+      <div class="container">
+        <section id="homeSection" class="section">
+          <h2>找到你的旅行搭子</h2>
+          <p>无论你是计划长途旅行还是临时寻找同伴，我们的平台都能帮你找到志同道合的旅行伙伴。</p>
+          
+          <div class="features">
+            <div class="feature-card">
+              <h3>游前计划</h3>
+              <p>发布行程，寻找同行伙伴</p>
+            </div>
+            <div class="feature-card">
+              <h3>游中匹配</h3>
+              <p>临时寻找吃饭或游览伙伴</p>
+            </div>
+            <div class="feature-card">
+              <h3>费用分摊</h3>
+              <p>轻松分摊旅行费用</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="tripsSection" class="section" style="display: none;">
+          <h2>行程招募</h2>
+          <button id="createTripBtn" class="btn btn-primary">发布行程</button>
+          <div id="mapContainer" class="map-container" style="height: 400px; display: none;"></div>
+          <div id="tripsList" class="list-container">
+            <!-- Trip items will be loaded here -->
+          </div>
+        </section>
+
+        <section id="invitesSection" class="section" style="display: none;">
+          <h2>临时邀约</h2>
+          <button id="createInviteBtn" class="btn btn-primary">发起邀约</button>
+          <div id="mapContainer2" class="map-container" style="height: 400px; display: none;"></div>
+          <div id="invitesList" class="list-container">
+            <!-- Invite items will be loaded here -->
+          </div>
+        </section>
+
+        <section id="expensesSection" class="section" style="display: none;">
+          <h2>费用分摊</h2>
+          <div id="expensesList" class="list-container">
+            <!-- Expense items will be loaded here -->
+          </div>
+        </section>
+
+        <section id="profileSection" class="section" style="display: none;">
+          <h2>我的档案</h2>
+          <div id="profileForm" class="profile-section">
+            <h3>旅行偏好设置</h3>
+            <form id="preferenceForm">
+              <div class="form-group">
+                <label for="travelPreference">旅游倾向 (J/P类型)</label>
+                <select id="travelPreference">
+                  <option value="">请选择</option>
+                  <option value="J">J型 (判断型)</option>
+                  <option value="P">P型 (知觉型)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>
+                  <input type="checkbox" id="canDrive"> 我会开车
+                </label>
+              </div>
+              <div class="form-group">
+                <label for="budgetSensitivity">价格敏感度</label>
+                <select id="budgetSensitivity">
+                  <option value="low">低（愿意花更多钱）</option>
+                  <option value="medium" selected>中等</option>
+                  <option value="high">高（节俭型）</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="soloExperience">独自出行经验（年）</label>
+                <input type="number" id="soloExperience" min="0" max="50" value="0">
+              </div>
+              <div class="form-group">
+                <label for="countriesVisited">去过的国家（逗号分隔）</label>
+                <textarea id="countriesVisited" placeholder="例如：中国, 日本, 泰国"></textarea>
+              </div>
+              <div class="form-group">
+                <label for="profileImage">头像URL</label>
+                <input type="text" id="profileImage" placeholder="输入图片链接">
+              </div>
+              <div class="form-group">
+                <label for="bio">个人简介</label>
+                <textarea id="bio" placeholder="介绍一下你自己..."></textarea>
+              </div>
+              <button type="submit" class="btn btn-primary">保存设置</button>
+            </form>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- Modals -->
+    <div id="loginModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>登录</h2>
+        <form id="loginForm">
+          <div class="form-group">
+            <label for="loginEmail">邮箱</label>
+            <input type="email" id="loginEmail" required>
+          </div>
+          <div class="form-group">
+            <label for="loginPassword">密码</label>
+            <input type="password" id="loginPassword" required>
+          </div>
+          <button type="submit" class="btn btn-primary">登录</button>
+        </form>
+      </div>
+    </div>
+
+    <div id="registerModal" class="modal">
+      <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>注册</h2>
+        <form id="registerForm">
+          <div class="form-group">
+            <label for="registerUsername">用户名</label>
+            <input type="text" id="registerUsername" required>
+          </div>
+          <div class="form-group">
+            <label for="registerEmail">邮箱</label>
+            <input type="email" id="registerEmail" required>
+          </div>
+          <div class="form-group">
+            <label for="registerPassword">密码</label>
+            <input type="password" id="registerPassword" required>
+          </div>
+          <button type="submit" class="btn btn-primary">注册</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="map.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

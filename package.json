@@ -1,0 +1,30 @@
+{
+  "name": "travel-buddy-matcher",
+  "version": "1.0.0",
+  "description": "A platform for solo travelers to find travel buddies and share experiences",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "test": "jest"
+  },
+  "keywords": ["travel", "buddy", "matching", "solo-travel"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "pg": "^8.11.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "sequelize": "^6.32.0",
+    "express-validator": "^7.0.1",
+    "axios": "^1.4.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22",
+    "jest": "^29.5.0",
+    "supertest": "^6.3.3"
+  }
+}
