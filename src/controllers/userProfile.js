@@ -184,3 +184,24 @@ exports.updateCurrentUserProfile = async (req, res) => {
     res.status(500).send('Server error');
   }
 };
+
+// Get all user profiles (for matching purposes)
+exports.getAllUserProfiles = async (req, res) => {
+  try {
+    const profiles = await UserProfile.findAll({
+      include: [{
+        model: User,
+        as: 'user',
+        attributes: ['id', 'username', 'email']
+      }],
+      attributes: {
+        exclude: ['createdAt', 'updatedAt'] // Exclude timestamps for cleaner response
+      }
+    });
+
+    res.json(profiles);
+  } catch (error) {
+    console.error('Error getting user profiles:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};

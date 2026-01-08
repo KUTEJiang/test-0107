@@ -215,6 +215,82 @@ body {
   margin-bottom: 1.5rem;
 }
 
+/* Match Cards */
+.match-card {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.match-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.match-score {
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+.match-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+}
+
+.detail-item .label {
+  font-weight: bold;
+  color: #555;
+}
+
+.recommendations {
+  margin-bottom: 15px;
+}
+
+.recommendations h4 {
+  margin: 10px 0 5px 0;
+  color: #333;
+  font-size: 0.9em;
+}
+
+.recommendations p {
+  margin: 0;
+  color: #666;
+  font-size: 0.9em;
+}
+
+.match-actions {
+  text-align: right;
+}
+
+.matching-results {
+  margin-top: 20px;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+}
+
+.no-results {
+  text-align: center;
+  color: #666;
+  font-style: italic;
+  padding: 20px;
+}
+
 @media (max-width: 768px) {
   .header .container {
     flex-direction: column;

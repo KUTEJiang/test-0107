@@ -871,7 +871,7 @@ async function findNearbyTravelBuddies() {
       const nearbyUsers = await getNearbyUsersWithProfiles(pos);
       const matchedUsers = performMBTIMatching(currentUserProfile, nearbyUsers);
       
-      showMatchingResults(matchedUsers);
+      showEnhancedMatchingResults(matchedUsers);
     } catch (error) {
       console.error('获取用户档案失败:', error);
       alert('正在查找附近的旅行搭子...');
@@ -903,6 +903,8 @@ async function getNearbyUsersWithProfiles(position) {
       pacePreference: 'moderate',
       riskTolerance: 'medium',
       soloExperience: 3,
+      accommodationPreference: 'hotel',
+      activityPreference: 'cultural',
       position: { lat: position.lat + 0.01, lng: position.lng + 0.01 }
     },
     {
@@ -914,6 +916,8 @@ async function getNearbyUsersWithProfiles(position) {
       pacePreference: 'slow',
       riskTolerance: 'low',
       soloExperience: 1,
+      accommodationPreference: 'airbnb',
+      activityPreference: 'indoor',
       position: { lat: position.lat - 0.02, lng: position.lng - 0.02 }
     },
     {
@@ -925,9 +929,109 @@ async function getNearbyUsersWithProfiles(position) {
       pacePreference: 'fast',
       riskTolerance: 'high',
       soloExperience: 5,
+      accommodationPreference: 'hostel',
+      activityPreference: 'outdoor',
       position: { lat: position.lat + 0.015, lng: position.lng - 0.015 }
+    },
+    {
+      id: 5,
+      name: '陈思思',
+      mbtiType: 'ESFJ',
+      travelStyle: 'cultural',
+      budgetSensitivity: 'medium',
+      pacePreference: 'moderate',
+      riskTolerance: 'medium',
+      soloExperience: 2,
+      accommodationPreference: 'mixed',
+      activityPreference: 'food',
+      position: { lat: position.lat - 0.01, lng: position.lng + 0.02 }
+    },
+    {
+      id: 6,
+      name: '刘强',
+      mbtiType: 'ISTJ',
+      travelStyle: 'budget',
+      budgetSensitivity: 'high',
+      pacePreference: 'slow',
+      riskTolerance: 'low',
+      soloExperience: 4,
+      accommodationPreference: 'hostel',
+      activityPreference: 'outdoor',
+      position: { lat: position.lat + 0.02, lng: position.lng - 0.01 }
     }
   ];
+}
+
+// 功能：搜索具有相似偏好的用户
+async function searchCompatibleUsers() {
+  if (!authToken) {
+    alert('请先登录');
+    return;
+  }
+  
+  try {
+    // 获取当前用户的档案
+    const response = await apiRequest('/users/profile/me');
+    const currentUserProfile = await response.json();
+    
+    // 获取所有用户档案用于匹配
+    const allUsersResponse = await apiRequest('/users/profiles');
+    const allUsers = await allUsersResponse.json();
+    
+    // 过滤掉当前用户自己
+    const otherUsers = allUsers.filter(user => user.userId !== currentUserProfile.userId);
+    
+    // 执行MBTI匹配
+    const matchedUsers = performMBTIMatching(currentUserProfile, otherUsers);
+    
+    // 显示增强版匹配结果
+    showEnhancedMatchingResults(matchedUsers);
+    
+  } catch (error) {
+    console.error('搜索兼容用户时出错:', error);
+    alert('搜索兼容用户时出现错误');
+  }
+}
+
+// 功能：根据特定条件筛选用户
+function filterUsersByPreferences(users, filters) {
+  return users.filter(user => {
+    // MBTI类型过滤
+    if (filters.mbtiType && user.mbtiType !== filters.mbtiType) {
+      return false;
+    }
+    
+    // 旅行风格过滤
+    if (filters.travelStyle && user.travelStyle !== filters.travelStyle) {
+      return false;
+    }
+    
+    // 预算敏感度过滤
+    if (filters.budgetSensitivity && user.budgetSensitivity !== filters.budgetSensitivity) {
+      return false;
+    }
+    
+    // 节奏偏好过滤
+    if (filters.pacePreference && user.pacePreference !== filters.pacePreference) {
+      return false;
+    }
+    
+    // 风险承受能力过滤
+    if (filters.riskTolerance && user.riskTolerance !== filters.riskTolerance) {
+      return false;
+    }
+    
+    // 经验范围过滤
+    if (filters.minExperience !== undefined && user.soloExperience < filters.minExperience) {
+      return false;
+    }
+    
+    if (filters.maxExperience !== undefined && user.soloExperience > filters.maxExperience) {
+      return false;
+    }
+    
+    return true;
+  });
 }
 
 // 执行MBTI匹配
@@ -941,11 +1045,13 @@ function performMBTIMatching(currentUserProfile, nearbyUsers) {
   const matchedUsers = nearbyUsers.map(user => {
     const matchScore = MBTIMatcher.calculateComprehensiveMatch(currentUserProfile, user);
     const activities = MBTIMatcher.recommendActivities(currentUserProfile, user);
+    const destinations = MBTIMatcher.recommendDestinations(user); // 获取目的地推荐
     
     return {
       ...user,
       matchScore,
-      activities: activities.slice(0, 3) // 只取前3个推荐活动
+      activities: activities.slice(0, 3), // 只取前3个推荐活动
+      destinations: destinations.slice(0, 3) // 只取前3个推荐目的地
     };
   });
   
@@ -962,14 +1068,115 @@ function showMatchingResults(matchedUsers) {
     return;
   }
   
+  // 创建更详细的匹配结果显示
   let message = '匹配到的旅行搭子:\n\n';
   matchedUsers.forEach((user, index) => {
     message += `${index + 1}. ${user.name} (匹配度: ${user.matchScore}%)\n`;
     message += `   MBTI: ${user.mbtiType || '未填写'}, 风格: ${user.travelStyle}\n`;
-    message += `   推荐活动: ${user.activities && user.activities.length > 0 ? user.activities.join(', ') : '无'}\n\n`;
+    message += `   节奏: ${user.pacePreference}, 预算: ${user.budgetSensitivity}\n`;
+    message += `   推荐活动: ${user.activities && user.activities.length > 0 ? user.activities.join(', ') : '无'}\n`;
+    message += `   推荐目的地: ${user.destinations && user.destinations.length > 0 ? user.destinations.join(', ') : '无'}\n\n`;
   });
   
   alert(message);
+}
+
+// 显示增强版匹配结果（在页面上展示，而不是弹窗）
+function showEnhancedMatchingResults(matchedUsers) {
+  if (matchedUsers.length === 0) {
+    // 显示无结果消息
+    const resultsContainer = document.getElementById('matchingResults') || createMatchingResultsContainer();
+    resultsContainer.innerHTML = '<p class="no-results">暂时没有找到匹配的旅行搭子</p>';
+    return;
+  }
+  
+  // 创建匹配结果HTML
+  const resultsHTML = matchedUsers.map((user, index) => {
+    // 生成匹配度颜色
+    let matchColor = '#ff4757'; // 红色，低匹配度
+    if (user.matchScore >= 80) {
+      matchColor = '#2ed573'; // 绿色，高匹配度
+    } else if (user.matchScore >= 60) {
+      matchColor = '#ffa502'; // 橙色，中高匹配度
+    } else if (user.matchScore >= 40) {
+      matchColor = '#3742fa'; // 蓝色，中等匹配度
+    }
+    
+    return `
+      <div class="match-card">
+        <div class="match-header">
+          <h3>${user.name}</h3>
+          <div class="match-score" style="color: ${matchColor}">
+            匹配度: ${user.matchScore}%
+          </div>
+        </div>
+        <div class="match-details">
+          <div class="detail-item">
+            <span class="label">MBTI:</span>
+            <span>${user.mbtiType || '未填写'}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">风格:</span>
+            <span>${user.travelStyle}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">节奏:</span>
+            <span>${user.pacePreference}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">预算:</span>
+            <span>${user.budgetSensitivity}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">经验:</span>
+            <span>${user.soloExperience}年</span>
+          </div>
+        </div>
+        <div class="recommendations">
+          <div class="activities">
+            <h4>推荐活动:</h4>
+            <p>${user.activities && user.activities.length > 0 ? user.activities.join(', ') : '无'}</p>
+          </div>
+          <div class="destinations">
+            <h4>推荐目的地:</h4>
+            <p>${user.destinations && user.destinations.length > 0 ? user.destinations.join(', ') : '无'}</p>
+          </div>
+        </div>
+        <div class="match-actions">
+          <button class="btn btn-primary" onclick="contactBuddy(${user.id})">联系搭子</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+  
+  // 显示结果
+  const resultsContainer = document.getElementById('matchingResults') || createMatchingResultsContainer();
+  resultsContainer.innerHTML = resultsHTML;
+}
+
+// 创建匹配结果容器
+function createMatchingResultsContainer() {
+  // 如果不存在匹配结果区域，则创建一个
+  const container = document.createElement('div');
+  container.id = 'matchingResults';
+  container.className = 'matching-results';
+  
+  // 添加样式
+  container.style.cssText = `
+    margin-top: 20px;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+  `;
+  
+  // 插入到页面中适当的位置
+  const mainContent = document.querySelector('.main .container');
+  if (mainContent) {
+    mainContent.appendChild(container);
+  }
+  
+  return container;
 }
 
 // Make functions available globally for inline event handlers
