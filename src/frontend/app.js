@@ -252,6 +252,9 @@ async function loadUserProfile() {
     
     if (response.ok) {
       // 填充表单字段
+      if (profile.mbtiType) {
+        document.getElementById('mbtiType').value = profile.mbtiType;
+      }
       if (profile.travelPreference) {
         document.getElementById('travelPreference').value = profile.travelPreference;
       }
@@ -263,6 +266,21 @@ async function loadUserProfile() {
       }
       if (profile.soloExperience !== undefined) {
         document.getElementById('soloExperience').value = profile.soloExperience;
+      }
+      if (profile.travelStyle) {
+        document.getElementById('travelStyle').value = profile.travelStyle;
+      }
+      if (profile.pacePreference) {
+        document.getElementById('pacePreference').value = profile.pacePreference;
+      }
+      if (profile.accommodationPreference) {
+        document.getElementById('accommodationPreference').value = profile.accommodationPreference;
+      }
+      if (profile.activityPreference) {
+        document.getElementById('activityPreference').value = profile.activityPreference;
+      }
+      if (profile.riskTolerance) {
+        document.getElementById('riskTolerance').value = profile.riskTolerance;
       }
       if (profile.countriesVisited && profile.countriesVisited.length > 0) {
         document.getElementById('countriesVisited').value = profile.countriesVisited.join(', ');
@@ -277,10 +295,16 @@ async function loadUserProfile() {
   } catch (error) {
     console.error('Error loading user profile:', error);
     // 初始化表单为空
+    document.getElementById('mbtiType').value = '';
     document.getElementById('travelPreference').value = '';
     document.getElementById('canDrive').checked = false;
     document.getElementById('budgetSensitivity').value = 'medium';
     document.getElementById('soloExperience').value = '0';
+    document.getElementById('travelStyle').value = 'cultural';
+    document.getElementById('pacePreference').value = 'moderate';
+    document.getElementById('accommodationPreference').value = 'mixed';
+    document.getElementById('activityPreference').value = 'mixed';
+    document.getElementById('riskTolerance').value = 'medium';
     document.getElementById('countriesVisited').value = '';
     document.getElementById('profileImage').value = '';
     document.getElementById('bio').value = '';
@@ -295,23 +319,41 @@ async function saveProfilePreferences(e) {
     return;
   }
   
+  const mbtiType = document.getElementById('mbtiType').value.toUpperCase();
   const travelPreference = document.getElementById('travelPreference').value;
   const canDrive = document.getElementById('canDrive').checked;
   const budgetSensitivity = document.getElementById('budgetSensitivity').value;
   const soloExperience = parseInt(document.getElementById('soloExperience').value) || 0;
+  const travelStyle = document.getElementById('travelStyle').value;
+  const pacePreference = document.getElementById('pacePreference').value;
+  const accommodationPreference = document.getElementById('accommodationPreference').value;
+  const activityPreference = document.getElementById('activityPreference').value;
+  const riskTolerance = document.getElementById('riskTolerance').value;
   const countriesVisitedText = document.getElementById('countriesVisited').value;
   const countriesVisited = countriesVisitedText ? countriesVisitedText.split(',').map(country => country.trim()).filter(country => country) : [];
   const profileImage = document.getElementById('profileImage').value;
   const bio = document.getElementById('bio').value;
   
+  // 验证MBTI类型
+  if (mbtiType && !/^[EJI][NSFP][TFJP][PJ]$/.test(mbtiType)) {
+    alert('请输入有效的MBTI类型（例如：ENFJ, ISTP等）');
+    return;
+  }
+  
   try {
     const response = await apiRequest('/users/profile/me', {
       method: 'PUT',
       body: JSON.stringify({
+        mbtiType,
         travelPreference,
         canDrive,
         budgetSensitivity,
         soloExperience,
+        travelStyle,
+        pacePreference,
+        accommodationPreference,
+        activityPreference,
+        riskTolerance,
         countriesVisited,
         profileImage,
         bio
@@ -804,7 +846,7 @@ async function findNearbyTravelBuddies() {
     alert('您的浏览器不支持地理位置服务');
     return;
   }
-  
+
   navigator.geolocation.getCurrentPosition(async (position) => {
     const pos = {
       lat: position.coords.latitude,
@@ -820,7 +862,20 @@ async function findNearbyTravelBuddies() {
       inviteMap.showNearbyTravelBuddies(pos);
     }
     
-    alert('正在查找附近的旅行搭子...');
+    // 获取当前用户档案用于匹配
+    try {
+      const response = await apiRequest('/users/profile/me');
+      const currentUserProfile = await response.json();
+      
+      // 获取附近用户并进行MBTI匹配
+      const nearbyUsers = await getNearbyUsersWithProfiles(pos);
+      const matchedUsers = performMBTIMatching(currentUserProfile, nearbyUsers);
+      
+      showMatchingResults(matchedUsers);
+    } catch (error) {
+      console.error('获取用户档案失败:', error);
+      alert('正在查找附近的旅行搭子...');
+    }
   }, (error) => {
     console.error('获取位置失败:', error);
     alert('无法获取您的位置信息，请确保已授权位置访问权限');
@@ -832,6 +887,89 @@ function formatDate(dateString) {
   if (!dateString) return '未设置';
   const date = new Date(dateString);
   return date.toLocaleDateString('zh-CN');
+}
+
+// 模拟获取附近用户的档案
+async function getNearbyUsersWithProfiles(position) {
+  // 这里应该是实际的API调用，返回附近用户的档案
+  // 模拟返回几个用户的数据
+  return [
+    {
+      id: 2,
+      name: '李明',
+      mbtiType: 'ENFJ',
+      travelStyle: 'cultural',
+      budgetSensitivity: 'medium',
+      pacePreference: 'moderate',
+      riskTolerance: 'medium',
+      soloExperience: 3,
+      position: { lat: position.lat + 0.01, lng: position.lng + 0.01 }
+    },
+    {
+      id: 3,
+      name: '王小美',
+      mbtiType: 'ISFP',
+      travelStyle: 'relaxing',
+      budgetSensitivity: 'high',
+      pacePreference: 'slow',
+      riskTolerance: 'low',
+      soloExperience: 1,
+      position: { lat: position.lat - 0.02, lng: position.lng - 0.02 }
+    },
+    {
+      id: 4,
+      name: '张伟',
+      mbtiType: 'ENTP',
+      travelStyle: 'adventure',
+      budgetSensitivity: 'medium',
+      pacePreference: 'fast',
+      riskTolerance: 'high',
+      soloExperience: 5,
+      position: { lat: position.lat + 0.015, lng: position.lng - 0.015 }
+    }
+  ];
+}
+
+// 执行MBTI匹配
+function performMBTIMatching(currentUserProfile, nearbyUsers) {
+  if (!window.MBTIMatcher) {
+    console.error('MBTI匹配器未加载');
+    return nearbyUsers.slice(0, 3); // 返回前3个用户作为模拟结果
+  }
+  
+  // 计算每个附近用户与当前用户的匹配度
+  const matchedUsers = nearbyUsers.map(user => {
+    const matchScore = MBTIMatcher.calculateComprehensiveMatch(currentUserProfile, user);
+    const activities = MBTIMatcher.recommendActivities(currentUserProfile, user);
+    
+    return {
+      ...user,
+      matchScore,
+      activities: activities.slice(0, 3) // 只取前3个推荐活动
+    };
+  });
+  
+  // 按匹配度降序排列
+  matchedUsers.sort((a, b) => b.matchScore - a.matchScore);
+  
+  return matchedUsers;
+}
+
+// 显示匹配结果
+function showMatchingResults(matchedUsers) {
+  if (matchedUsers.length === 0) {
+    alert('暂时没有找到匹配的旅行搭子');
+    return;
+  }
+  
+  let message = '匹配到的旅行搭子:\n\n';
+  matchedUsers.forEach((user, index) => {
+    message += `${index + 1}. ${user.name} (匹配度: ${user.matchScore}%)\n`;
+    message += `   MBTI: ${user.mbtiType || '未填写'}, 风格: ${user.travelStyle}\n`;
+    message += `   推荐活动: ${user.activities && user.activities.length > 0 ? user.activities.join(', ') : '无'}\n\n`;
+  });
+  
+  alert(message);
 }
 
 // Make functions available globally for inline event handlers

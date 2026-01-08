@@ -17,8 +17,12 @@ const UserProfile = sequelize.define('UserProfile', {
     },
     unique: true
   },
+  mbtiType: {
+    type: DataTypes.STRING, // MBTI personality type (e.g. ENFJ, ISTP, etc.)
+    allowNull: true
+  },
   travelPreference: {
-    type: DataTypes.STRING, // 'J' for Judging, 'P' for Perceiving
+    type: DataTypes.STRING, // 'J' for Judging, 'P' for Perceiving (part of MBTI)
     allowNull: true
   },
   canDrive: {
@@ -44,6 +48,27 @@ const UserProfile = sequelize.define('UserProfile', {
   bio: {
     type: DataTypes.TEXT,
     defaultValue: null
+  },
+  // Additional personality and preference fields
+  travelStyle: {
+    type: DataTypes.ENUM('adventure', 'relaxing', 'cultural', 'luxury', 'budget', 'backpacking'),
+    defaultValue: 'cultural'
+  },
+  pacePreference: {
+    type: DataTypes.ENUM('fast', 'moderate', 'slow'),
+    defaultValue: 'moderate'
+  },
+  accommodationPreference: {
+    type: DataTypes.ENUM('hotel', 'hostel', 'airbnb', 'luxury', 'camping', 'mixed'),
+    defaultValue: 'mixed'
+  },
+  activityPreference: {
+    type: DataTypes.ENUM('outdoor', 'indoor', 'cultural', 'adventure', 'food', 'mixed'),
+    defaultValue: 'mixed'
+  },
+  riskTolerance: {
+    type: DataTypes.ENUM('low', 'medium', 'high'),
+    defaultValue: 'medium'
   }
 }, {
   tableName: 'user_profiles',

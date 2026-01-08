@@ -78,31 +78,97 @@
           <div id="profileForm" class="profile-section">
             <h3>旅行偏好设置</h3>
             <form id="preferenceForm">
-              <div class="form-group">
-                <label for="travelPreference">旅游倾向 (J/P类型)</label>
-                <select id="travelPreference">
-                  <option value="">请选择</option>
-                  <option value="J">J型 (判断型)</option>
-                  <option value="P">P型 (知觉型)</option>
-                </select>
+              <div class="form-row">
+                <div class="form-group half-width">
+                  <label for="mbtiType">MBTI性格类型</label>
+                  <input type="text" id="mbtiType" placeholder="例如：ENFJ, ISTP" maxlength="4">
+                </div>
+                <div class="form-group half-width">
+                  <label for="travelPreference">旅游倾向 (J/P类型)</label>
+                  <select id="travelPreference">
+                    <option value="">请选择</option>
+                    <option value="J">J型 (判断型)</option>
+                    <option value="P">P型 (知觉型)</option>
+                  </select>
+                </div>
               </div>
+              
               <div class="form-group">
                 <label>
                   <input type="checkbox" id="canDrive"> 我会开车
                 </label>
               </div>
+              
+              <div class="form-row">
+                <div class="form-group half-width">
+                  <label for="budgetSensitivity">价格敏感度</label>
+                  <select id="budgetSensitivity">
+                    <option value="low">低（愿意花更多钱）</option>
+                    <option value="medium" selected>中等</option>
+                    <option value="high">高（节俭型）</option>
+                  </select>
+                </div>
+                <div class="form-group half-width">
+                  <label for="soloExperience">独自出行经验（年）</label>
+                  <input type="number" id="soloExperience" min="0" max="50" value="0">
+                </div>
+              </div>
+              
               <div class="form-group">
-                <label for="budgetSensitivity">价格敏感度</label>
-                <select id="budgetSensitivity">
-                  <option value="low">低（愿意花更多钱）</option>
-                  <option value="medium" selected>中等</option>
-                  <option value="high">高（节俭型）</option>
+                <label for="travelStyle">旅行风格</label>
+                <select id="travelStyle">
+                  <option value="adventure">冒险型</option>
+                  <option value="relaxing">休闲型</option>
+                  <option value="cultural" selected>文化探索型</option>
+                  <option value="luxury">奢华型</option>
+                  <option value="budget">经济型</option>
+                  <option value="backpacking">背包客型</option>
                 </select>
               </div>
-              <div class="form-group">
-                <label for="soloExperience">独自出行经验（年）</label>
-                <input type="number" id="soloExperience" min="0" max="50" value="0">
+              
+              <div class="form-row">
+                <div class="form-group half-width">
+                  <label for="pacePreference">旅行节奏</label>
+                  <select id="pacePreference">
+                    <option value="fast">快节奏</option>
+                    <option value="moderate" selected>中等节奏</option>
+                    <option value="slow">慢节奏</option>
+                  </select>
+                </div>
+                <div class="form-group half-width">
+                  <label for="riskTolerance">风险承受能力</label>
+                  <select id="riskTolerance">
+                    <option value="low">低</option>
+                    <option value="medium" selected>中等</option>
+                    <option value="high">高</option>
+                  </select>
+                </div>
               </div>
+              
+              <div class="form-group">
+                <label for="accommodationPreference">住宿偏好</label>
+                <select id="accommodationPreference">
+                  <option value="hotel">酒店</option>
+                  <option value="hostel">青旅</option>
+                  <option value="airbnb" selected>民宿</option>
+                  <option value="luxury">豪华酒店</option>
+                  <option value="camping">露营</option>
+                  <option value="mixed">混合型</option>
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label for="activityPreference">活动偏好</label>
+                <select id="activityPreference">
+                  <option value="outdoor">户外活动</option>
+                  <option value="indoor">室内活动</option>
+                  <option value="cultural" selected>文化活动</option>
+                  <option value="adventure">冒险活动</option>
+                  <option value="food">美食体验</option>
+                  <option value="mixed">混合型</option>
+                </select>
+              </div>
+              
               <div class="form-group">
                 <label for="countriesVisited">去过的国家（逗号分隔）</label>
                 <textarea id="countriesVisited" placeholder="例如：中国, 日本, 泰国"></textarea>
@@ -165,6 +231,7 @@
   </div>
 
   <script src="map.js"></script>
+  <script src="mbti-matcher.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

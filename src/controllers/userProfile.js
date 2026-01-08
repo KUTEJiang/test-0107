@@ -28,13 +28,19 @@ exports.getProfile = async (req, res) => {
 exports.updateProfile = async (req, res) => {
   try {
     const {
+      mbtiType,
       travelPreference,
       canDrive,
       budgetSensitivity,
       soloExperience,
       countriesVisited,
       profileImage,
-      bio
+      bio,
+      travelStyle,
+      pacePreference,
+      accommodationPreference,
+      activityPreference,
+      riskTolerance
     } = req.body;
 
     const profile = await UserProfile.findOne({ where: { userId: req.params.id } });
@@ -45,13 +51,19 @@ exports.updateProfile = async (req, res) => {
 
     // Update profile
     await profile.update({
+      mbtiType,
       travelPreference,
       canDrive,
       budgetSensitivity,
       soloExperience,
       countriesVisited,
       profileImage,
-      bio
+      bio,
+      travelStyle,
+      pacePreference,
+      accommodationPreference,
+      activityPreference,
+      riskTolerance
     });
 
     res.json({ 
@@ -109,13 +121,19 @@ exports.getCurrentUserProfile = async (req, res) => {
 exports.updateCurrentUserProfile = async (req, res) => {
   try {
     const {
+      mbtiType,
       travelPreference,
       canDrive,
       budgetSensitivity,
       soloExperience,
       countriesVisited,
       profileImage,
-      bio
+      bio,
+      travelStyle,
+      pacePreference,
+      accommodationPreference,
+      activityPreference,
+      riskTolerance
     } = req.body;
 
     let profile = await UserProfile.findOne({ where: { userId: req.userId } });
@@ -124,24 +142,36 @@ exports.updateCurrentUserProfile = async (req, res) => {
       // Create profile if it doesn't exist
       profile = await UserProfile.create({
         userId: req.userId,
+        mbtiType,
         travelPreference,
         canDrive,
         budgetSensitivity,
         soloExperience,
         countriesVisited,
         profileImage,
-        bio
+        bio,
+        travelStyle,
+        pacePreference,
+        accommodationPreference,
+        activityPreference,
+        riskTolerance
       });
     } else {
       // Update existing profile
       await profile.update({
+        mbtiType,
         travelPreference,
         canDrive,
         budgetSensitivity,
         soloExperience,
         countriesVisited,
         profileImage,
-        bio
+        bio,
+        travelStyle,
+        pacePreference,
+        accommodationPreference,
+        activityPreference,
+        riskTolerance
       });
     }
 
