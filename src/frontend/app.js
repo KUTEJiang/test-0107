@@ -867,9 +867,17 @@ async function findNearbyTravelBuddies() {
       const response = await apiRequest('/users/profile/me');
       const currentUserProfile = await response.json();
       
-      // 获取附近用户并进行MBTI匹配
+      // 获取附近用户并进行智能匹配
       const nearbyUsers = await getNearbyUsersWithProfiles(pos);
-      const matchedUsers = performMBTIMatching(currentUserProfile, nearbyUsers);
+      
+      // 创建上下文信息用于智能匹配
+      const context = {
+        location: { lat: pos.lat, lng: pos.lng },
+        season: getCurrentSeason(), // 获取当前季节
+        timeframe: 'short_trip' // 假设是短期旅行
+      };
+      
+      const matchedUsers = performSmartMatching(currentUserProfile, nearbyUsers, context);
       
       showEnhancedMatchingResults(matchedUsers);
     } catch (error) {
@@ -880,6 +888,191 @@ async function findNearbyTravelBuddies() {
     console.error('获取位置失败:', error);
     alert('无法获取您的位置信息，请确保已授权位置访问权限');
   });
+}
+
+// 获取当前季节
+function getCurrentSeason() {
+  const month = new Date().getMonth() + 1; // 月份从0开始
+  
+  if (month >= 3 && month <= 5) return 'spring';
+  if (month >= 6 && month <= 8) return 'summer';
+  if (month >= 9 && month <= 11) return 'autumn';
+  return 'winter';
+}
+
+// 搜索兼容用户函数也需要更新
+async function searchCompatibleUsers() {
+  if (!authToken) {
+    alert('请先登录');
+    return;
+  }
+  
+  try {
+    // 显示加载通知
+    const loadingNotification = notificationSystem.show('正在搜索匹配的旅行搭子...', 'info', 0);
+    
+    // 获取当前用户的档案
+    const response = await apiRequest('/users/profile/me');
+    const currentUserProfile = await response.json();
+    
+    // 获取所有用户档案用于匹配
+    const allUsersResponse = await apiRequest('/users/profiles');
+    const allUsers = await allUsersResponse.json();
+    
+    // 过滤掉当前用户自己
+    const otherUsers = allUsers.filter(user => user.userId !== currentUserProfile.userId);
+    
+    // 创建上下文信息用于智能匹配
+    const context = {
+      season: getCurrentSeason(), // 基于当前季节的推荐
+      timeframe: 'any' // 任何时间范围
+    };
+    
+    // 执行智能匹配
+    const matchedUsers = performSmartMatching(currentUserProfile, otherUsers, context);
+    
+    // 隐藏加载通知
+    notificationSystem.hide(loadingNotification);
+    
+    // 显示结果通知
+    if (matchedUsers.length > 0) {
+      notificationSystem.showMatchNotification(`找到 ${matchedUsers.length} 个匹配的旅行搭子！`, 'success');
+    } else {
+      notificationSystem.showMatchNotification('未找到匹配的旅行搭子', 'warning');
+    }
+    
+    // 显示增强版匹配结果
+    showEnhancedMatchingResults(matchedUsers);
+    
+  } catch (error) {
+    console.error('搜索兼容用户时出错:', error);
+    notificationSystem.show('搜索兼容用户时出现错误', 'error');
+  }
+}
+
+// 更新查找附近旅行搭子的函数以使用通知系统
+async function findNearbyTravelBuddies() {
+  if (!navigator.geolocation) {
+    notificationSystem.show('您的浏览器不支持地理位置服务', 'error');
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(async (position) => {
+    const pos = {
+      lat: position.coords.latitude,
+      lng: position.coords.longitude
+    };
+    
+    // 显示位置获取通知
+    notificationSystem.showLocationNotification('已获取您的当前位置');
+    
+    // 尝试在两个地图上都显示附近的人
+    if (tripMap && tripMap.loaded) {
+      tripMap.showNearbyTravelBuddies(pos);
+    }
+    
+    if (inviteMap && inviteMap.loaded) {
+      inviteMap.showNearbyTravelBuddies(pos);
+    }
+    
+    // 显示加载通知
+    const loadingNotification = notificationSystem.show('正在搜索附近的旅行搭子...', 'info', 0);
+    
+    // 获取当前用户档案用于匹配
+    try {
+      const response = await apiRequest('/users/profile/me');
+      const currentUserProfile = await response.json();
+      
+      // 获取附近用户并进行智能匹配
+      const nearbyUsers = await getNearbyUsersWithProfiles(pos);
+      
+      // 创建上下文信息用于智能匹配
+      const context = {
+        location: { lat: pos.lat, lng: pos.lng },
+        season: getCurrentSeason(), // 获取当前季节
+        timeframe: 'short_trip' // 假设是短期旅行
+      };
+      
+      const matchedUsers = performSmartMatching(currentUserProfile, nearbyUsers, context);
+      
+      // 隐藏加载通知
+      notificationSystem.hide(loadingNotification);
+      
+      // 显示结果通知
+      if (matchedUsers.length > 0) {
+        const topMatch = matchedUsers[0];
+        notificationSystem.showNewMatchNotification(topMatch.name, topMatch.matchScore);
+      } else {
+        notificationSystem.show('附近暂时没有可匹配的旅行搭子', 'warning');
+      }
+      
+      showEnhancedMatchingResults(matchedUsers);
+    } catch (error) {
+      console.error('获取用户档案失败:', error);
+      notificationSystem.show('获取用户档案失败', 'error');
+      // 隐藏加载通知
+      notificationSystem.hide(loadingNotification);
+    }
+  }, (error) => {
+    console.error('获取位置失败:', error);
+    notificationSystem.show('无法获取您的位置信息，请确保已授权位置访问权限', 'error');
+  });
+}
+
+// 添加实时通知功能
+function initializeRealTimeNotifications() {
+  // 模拟实时通知 - 在实际应用中，这将来自WebSocket或其他实时通信渠道
+  setInterval(() => {
+    // 模拟收到新匹配通知
+    if (Math.random() > 0.8 && currentUser) { // 20% 概率触发
+      const mockMatches = [
+        { name: '张小明', matchScore: 85 },
+        { name: '李美美', matchScore: 92 },
+        { name: '王大力', matchScore: 78 },
+        { name: '赵静静', matchScore: 88 }
+      ];
+      
+      const randomMatch = mockMatches[Math.floor(Math.random() * mockMatches.length)];
+      notificationSystem.showNewMatchNotification(randomMatch.name, randomMatch.matchScore);
+    }
+  }, 30000); // 每30秒检查一次
+}
+
+// 页面加载完成后初始化实时通知
+document.addEventListener('DOMContentLoaded', function() {
+  // 其他初始化代码...
+  setTimeout(initializeRealTimeNotifications, 5000); // 5秒后开始实时通知
+});
+
+// 更新API请求函数以包含错误通知
+async function apiRequest(endpoint, options = {}) {
+  const headers = {
+    'Content-Type': 'application/json',
+    ...options.headers
+  };
+  
+  if (authToken) {
+    headers['Authorization'] = `Bearer ${authToken}`;
+  }
+  
+  try {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      ...options,
+      headers
+    });
+    
+    // 如果响应不是成功状态，显示错误通知
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      notificationSystem.show(`API请求失败: ${errorData.message || '未知错误'}`, 'error');
+    }
+    
+    return response;
+  } catch (error) {
+    console.error('API请求错误:', error);
+    notificationSystem.show('网络请求失败，请检查连接', 'error');
+    throw error;
+  }
 }
 
 // Utility functions
@@ -1034,7 +1227,36 @@ function filterUsersByPreferences(users, filters) {
   });
 }
 
-// 执行MBTI匹配
+// 执行智能匹配（使用新的推荐引擎）
+function performSmartMatching(currentUserProfile, nearbyUsers, context = {}) {
+  if (!window.IntelligentRecommender) {
+    console.warn('智能推荐引擎未加载，使用基础MBTI匹配');
+    return performMBTIMatching(currentUserProfile, nearbyUsers);
+  }
+  
+  const recommender = new IntelligentRecommender();
+  
+  // 计算每个附近用户与当前用户的智能匹配度
+  const matchedUsers = nearbyUsers.map(user => {
+    const matchResult = recommender.getSmartMatchScore(currentUserProfile, user, context);
+    
+    return {
+      ...user,
+      matchScore: matchResult.score,
+      matchAnalysis: matchResult.analysis,
+      matchConfidence: matchResult.confidence,
+      smartRecommendations: matchResult.recommendations.slice(0, 5), // 只取前5个推荐
+      matchInsights: recommender.getMatchInsights(currentUserProfile, user, matchResult)
+    };
+  });
+  
+  // 按匹配度降序排列
+  matchedUsers.sort((a, b) => b.matchScore - a.matchScore);
+  
+  return matchedUsers;
+}
+
+// 执行MBTI匹配（保留原有功能）
 function performMBTIMatching(currentUserProfile, nearbyUsers) {
   if (!window.MBTIMatcher) {
     console.error('MBTI匹配器未加载');
@@ -1102,12 +1324,31 @@ function showEnhancedMatchingResults(matchedUsers) {
       matchColor = '#3742fa'; // 蓝色，中等匹配度
     }
     
+    // 确定置信度标签
+    let confidenceLabel = '';
+    let confidenceClass = '';
+    if (user.matchConfidence === 'high') {
+      confidenceLabel = '高';
+      confidenceClass = 'confidence-high';
+    } else if (user.matchConfidence === 'medium') {
+      confidenceLabel = '中';
+      confidenceClass = 'confidence-medium';
+    } else {
+      confidenceLabel = '低';
+      confidenceClass = 'confidence-low';
+    }
+    
     return `
       <div class="match-card">
         <div class="match-header">
           <h3>${user.name}</h3>
-          <div class="match-score" style="color: ${matchColor}">
-            匹配度: ${user.matchScore}%
+          <div class="match-score-container">
+            <div class="match-score" style="color: ${matchColor}">
+              匹配度: ${user.matchScore}%
+            </div>
+            <div class="match-confidence ${confidenceClass}">
+              置信度: ${confidenceLabel}
+            </div>
           </div>
         </div>
         <div class="match-details">
@@ -1134,14 +1375,23 @@ function showEnhancedMatchingResults(matchedUsers) {
         </div>
         <div class="recommendations">
           <div class="activities">
-            <h4>推荐活动:</h4>
-            <p>${user.activities && user.activities.length > 0 ? user.activities.join(', ') : '无'}</p>
+            <h4>智能推荐活动:</h4>
+            <p>${user.smartRecommendations && user.smartRecommendations.length > 0 ? user.smartRecommendations.join(', ') : 
+               (user.activities && user.activities.length > 0 ? user.activities.join(', ') : '无')}</p>
           </div>
           <div class="destinations">
             <h4>推荐目的地:</h4>
             <p>${user.destinations && user.destinations.length > 0 ? user.destinations.join(', ') : '无'}</p>
           </div>
         </div>
+        ${user.matchInsights && user.matchInsights.length > 0 ? `
+        <div class="match-insights">
+          <h4>匹配洞察:</h4>
+          <ul>
+            ${user.matchInsights.map(insight => `<li>${insight}</li>`).join('')}
+          </ul>
+        </div>
+        ` : ''}
         <div class="match-actions">
           <button class="btn btn-primary" onclick="contactBuddy(${user.id})">联系搭子</button>
         </div>
@@ -1188,5 +1438,34 @@ window.settleExpense = settleExpense;
 window.showTripOnMap = showTripOnMap;
 window.showInviteOnMap = showInviteOnMap;
 window.contactBuddy = (buddyId) => {
-  alert(`正在联系搭子 ${buddyId}...`);
+  // 使用聊天系统联系搭子
+  if (window.chatSystem && buddyId) {
+    // 在实际应用中，这里会获取用户的真实姓名
+    const buddyNames = {
+      1: '张三', 2: '李四', 3: '王五', 4: '赵六',
+      '1': '张三', '2': '李四', '3': '王五', '4': '赵六'
+    };
+    const buddyName = buddyNames[buddyId] || `搭子${buddyId}`;
+    chatSystem.startChatWithUser(buddyId, buddyName);
+  } else {
+    alert(`正在联系搭子 ${buddyId}...`);
+  }
+};
+
+// 添加查看用户详情的全局函数
+window.viewUserDetails = (userId) => {
+  if (!authToken) {
+    alert('请先登录');
+    return;
+  }
+  
+  // 在实际应用中，这里会调用API获取用户详细信息
+  const userNames = {
+    1: '张三', 2: '李四', 3: '王五', 4: '赵六',
+    '1': '张三', '2': '李四', '3': '王五', '4': '赵六'
+  };
+  const userName = userNames[userId] || `用户${userId}`;
+  
+  // 显示用户信息的模态框
+  alert(`用户详情:\n用户名: ${userName}\nID: ${userId}\n\n在实际应用中，这里会显示用户的详细档案信息。`);
 };
